@@ -1,8 +1,8 @@
 package bad_bank_test
 
 import (
-	a "go-with-tests/generic-array-slice"
-	bb "go-with-tests/generic-array-slice/bad_bank"
+	a "fundamentals/generic-array-slice"
+	bb "fundamentals/generic-array-slice/bad_bank"
 
 	"testing"
 )

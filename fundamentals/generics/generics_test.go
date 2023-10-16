@@ -1,7 +1,7 @@
 package generics_test
 
 import (
-	g "go-with-tests/generics"
+	g "fundamentals/generics"
 	"testing"
 )
 

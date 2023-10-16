@@ -4,7 +4,7 @@ import (
 	"os"
 	"time"
 
-	"go-with-tests/maths/svg"
+	"fundamentals/maths/svg"
 )
 
 func main() {

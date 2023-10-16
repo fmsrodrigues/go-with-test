@@ -2,7 +2,7 @@ package blogrenderer_test
 
 import (
 	"bytes"
-	blogrenderer "go-with-tests/templating"
+	blogrenderer "fundamentals/templating"
 	"io"
 	"testing"
 

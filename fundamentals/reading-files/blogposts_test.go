@@ -1,7 +1,7 @@
 package blogposts_test
 
 import (
-	blogposts "go-with-tests/reading-files"
+	blogposts "fundamentals/reading-files"
 	"reflect"
 	"testing"
 	"testing/fstest"

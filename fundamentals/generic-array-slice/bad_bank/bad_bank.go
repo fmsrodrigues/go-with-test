@@ -1,6 +1,6 @@
 package bad_bank
 
-import "go-with-tests/generic-array-slice/sum"
+import "fundamentals/generic-array-slice/sum"
 
 type Transaction struct {
 	From string

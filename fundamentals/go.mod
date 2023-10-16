@@ -1,4 +1,4 @@
-module go-with-tests
+module fundamentals
 
 go 1.21.1
 

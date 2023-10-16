@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	. "go-with-tests/maths"
+	. "fundamentals/maths"
 )
 
 func TestSecondsInRadians(t *testing.T) {

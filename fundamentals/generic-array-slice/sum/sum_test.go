@@ -1,8 +1,8 @@
 package sum_test
 
 import (
-	a "go-with-tests/generic-array-slice"
-	s "go-with-tests/generic-array-slice/sum"
+	a "fundamentals/generic-array-slice"
+	s "fundamentals/generic-array-slice/sum"
 	"reflect"
 	"strings"
 	"testing"
