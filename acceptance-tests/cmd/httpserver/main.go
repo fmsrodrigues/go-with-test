@@ -1,11 +1,11 @@
 package main
 
 import (
-	go_specs_greet "acceptance-tests"
+	"acceptance-tests/adapters/httpserver"
 	"net/http"
 )
 
 func main() {
-	handler := http.HandlerFunc(go_specs_greet.Handler)
+	handler := http.HandlerFunc(httpserver.Handler)
 	http.ListenAndServe(":8080", handler)
 }
