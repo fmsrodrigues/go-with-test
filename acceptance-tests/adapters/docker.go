@@ -15,15 +15,18 @@ import (
 func StartDockerServer(
 	t testing.TB,
 	port string,
-	dockerFilePath string,
+	binToBuild string,
 ) {
 	ctx := context.Background()
 	t.Helper()
 
 	req := testcontainers.ContainerRequest{
 		FromDockerfile: testcontainers.FromDockerfile{
-			Context:       "../../.",
-			Dockerfile:    dockerFilePath,
+			Context:    "../../.",
+			Dockerfile: "Dockerfile",
+			BuildArgs: map[string]*string{
+				"bin_to_build": &binToBuild,
+			},
 			PrintBuildLog: true,
 		},
 		ExposedPorts: []string{fmt.Sprintf("%s:%s", port, port)},
@@ -35,6 +38,7 @@ func StartDockerServer(
 		Started:          true,
 	})
 	assert.NoError(t, err)
+
 	t.Cleanup(func() {
 		assert.NoError(t, container.Terminate(ctx))
 	})
