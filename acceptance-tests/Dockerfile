@@ -10,6 +10,6 @@ RUN go mod download
 
 COPY . .
 
-RUN go build -o svr cmd/${bin_to_build}}/*.go
+RUN go build -o svr cmd/${bin_to_build}/*.go
 
 CMD ["./svr"]
