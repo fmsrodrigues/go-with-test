@@ -1,10 +1,8 @@
-package main_test
+package poker
 
 import (
 	"os"
 	"testing"
-
-	http_server "applications/http-server"
 )
 
 func TestFileSystemStore(t *testing.T) {
@@ -15,11 +13,11 @@ func TestFileSystemStore(t *testing.T) {
 		]`)
 		defer cleanDatabase()
 
-		store, err := http_server.NewFileSystemPlayerStore(Database)
+		store, err := NewFileSystemPlayerStore(Database)
 		assertNoError(t, err)
 
 		got := store.GetLeague()
-		want := []http_server.Player{
+		want := []Player{
 			{"Chris", 33},
 			{"Cleo", 10},
 		}
@@ -36,7 +34,7 @@ func TestFileSystemStore(t *testing.T) {
 		]`)
 		defer cleanDatabase()
 
-		store, _ := http_server.NewFileSystemPlayerStore(Database)
+		store, _ := NewFileSystemPlayerStore(Database)
 
 		got := store.GetPlayerScore("Chris")
 		want := 33
@@ -50,7 +48,7 @@ func TestFileSystemStore(t *testing.T) {
 		]`)
 		defer cleanDatabase()
 
-		store, _ := http_server.NewFileSystemPlayerStore(Database)
+		store, _ := NewFileSystemPlayerStore(Database)
 		store.RecordWin("Chris")
 
 		got := store.GetPlayerScore("Chris")
@@ -65,7 +63,7 @@ func TestFileSystemStore(t *testing.T) {
 		]`)
 		defer cleanDatabase()
 
-		store, _ := http_server.NewFileSystemPlayerStore(Database)
+		store, _ := NewFileSystemPlayerStore(Database)
 		store.RecordWin("Pepper")
 
 		got := store.GetPlayerScore("Pepper")
@@ -77,7 +75,7 @@ func TestFileSystemStore(t *testing.T) {
 		Database, cleanDatabase := createTempFile(t, "")
 		defer cleanDatabase()
 
-		_, err := http_server.NewFileSystemPlayerStore(Database)
+		_, err := NewFileSystemPlayerStore(Database)
 
 		assertNoError(t, err)
 	})
