@@ -2,9 +2,11 @@
 package poker
 
 import (
+	"fmt"
 	"net/http/httptest"
 	"reflect"
 	"testing"
+	"time"
 )
 
 type StubPlayerStore struct {
@@ -24,6 +26,23 @@ func (s *StubPlayerStore) RecordWin(name string) {
 
 func (s *StubPlayerStore) GetLeague() League {
 	return s.league
+}
+
+type ScheduledAlert struct {
+	At     time.Duration
+	Amount int
+}
+
+func (s ScheduledAlert) String() string {
+	return fmt.Sprintf("%d chips at %v", s.Amount, s.At)
+}
+
+type SpyBlindAlerter struct {
+	Alerts []ScheduledAlert
+}
+
+func (s *SpyBlindAlerter) ScheduleAlertAt(duration time.Duration, amount int) {
+	s.Alerts = append(s.Alerts, ScheduledAlert{duration, amount})
 }
 
 func AssertResponseBody(t testing.TB, got, want string) {
@@ -83,5 +102,17 @@ func AssertNoError(t testing.TB, err error) {
 
 	if err != nil {
 		t.Fatalf("didn't expect an error but got one, %v", err)
+	}
+}
+
+func AssertScheduledAlert(t testing.TB, got, want ScheduledAlert) {
+	t.Helper()
+
+	if got.Amount != want.Amount {
+		t.Errorf("got amount %d, want %d", got.Amount, want.Amount)
+	}
+
+	if got.At != want.At {
+		t.Errorf("got scheduled time of %v, want %v", got.At, want.At)
 	}
 }
