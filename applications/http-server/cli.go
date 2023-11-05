@@ -2,15 +2,21 @@ package poker
 
 import (
 	"bufio"
+	"errors"
+	"fmt"
 	"io"
+	"strconv"
 	"strings"
-	"time"
 )
 
+const PlayerPrompt = "Please enter the number of players: "
+const BadPlayerInputErrMsg = "Bad value received for number of players, please try again with a number"
+const BadWinnerInputMsg = "invalid winner input, expect format of 'PlayerName wins'"
+
 type CLI struct {
-	playerStore PlayerStore
-	in          *bufio.Scanner
-	alerter     BlindAlerter
+	in   *bufio.Scanner
+	out  io.Writer
+	game Game
 }
 
 func (cli *CLI) readLine() string {
@@ -18,30 +24,40 @@ func (cli *CLI) readLine() string {
 	return cli.in.Text()
 }
 
-func (cli *CLI) scheduleBlindAlerts() {
-	blinds := []int{100, 200, 300, 400, 500, 600, 800, 1000, 2000, 4000, 8000}
-	blindTime := 0 * time.Second
-
-	for _, blind := range blinds {
-		cli.alerter.ScheduleAlertAt(blindTime, blind)
-		blindTime = blindTime + 10*time.Minute
-	}
-}
-
 func (cli *CLI) PlayPoker() {
-	cli.scheduleBlindAlerts()
-	userInput := cli.readLine()
-	cli.playerStore.RecordWin(extractWinner(userInput))
+	fmt.Fprint(cli.out, PlayerPrompt)
+
+	numberOfPlayersInput := cli.readLine()
+	numberOfPlayers, err := strconv.Atoi(numberOfPlayersInput)
+	if err != nil {
+		fmt.Fprint(cli.out, BadPlayerInputErrMsg)
+		return
+	}
+
+	cli.game.Start(numberOfPlayers)
+
+	winnerInput := cli.readLine()
+	winner, err := extractWinner(winnerInput)
+	if err != nil {
+		fmt.Fprint(cli.out, BadWinnerInputMsg)
+		return
+	}
+
+	cli.game.Finish(winner)
 }
 
-func NewCLI(store PlayerStore, in io.Reader, alerter BlindAlerter) *CLI {
+func NewCLI(in io.Reader, out io.Writer, game Game) *CLI {
 	return &CLI{
-		playerStore: store,
-		in:          bufio.NewScanner(in),
-		alerter:     alerter,
+		in:   bufio.NewScanner(in),
+		out:  out,
+		game: game,
 	}
 }
 
-func extractWinner(userInput string) string {
-	return strings.Replace(userInput, " wins", "", 1)
+func extractWinner(userInput string) (string, error) {
+	if !strings.Contains(userInput, " wins") {
+		return "", errors.New(BadWinnerInputMsg)
+	}
+
+	return strings.Replace(userInput, " wins", "", 1), nil
 }

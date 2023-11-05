@@ -2,9 +2,11 @@
 package poker
 
 import (
+	"bytes"
 	"fmt"
 	"net/http/httptest"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 )
@@ -39,6 +41,24 @@ func (s ScheduledAlert) String() string {
 
 type SpyBlindAlerter struct {
 	Alerts []ScheduledAlert
+}
+
+type GameSpy struct {
+	StartCalled     bool
+	StartCalledWith int
+
+	FinishedCalled   bool
+	FinishCalledWith string
+}
+
+func (g *GameSpy) Start(numberOfPlayers int) {
+	g.StartCalled = true
+	g.StartCalledWith = numberOfPlayers
+}
+
+func (g *GameSpy) Finish(winner string) {
+	g.FinishedCalled = true
+	g.FinishCalledWith = winner
 }
 
 func (s *SpyBlindAlerter) ScheduleAlertAt(duration time.Duration, amount int) {
@@ -114,5 +134,42 @@ func AssertScheduledAlert(t testing.TB, got, want ScheduledAlert) {
 
 	if got.At != want.At {
 		t.Errorf("got scheduled time of %v, want %v", got.At, want.At)
+	}
+}
+
+func AssertGameStartedWith(t testing.TB, game *GameSpy, numberOfPlayersWanted int) {
+	t.Helper()
+	if game.StartCalledWith != numberOfPlayersWanted {
+		t.Errorf("wanted Start called with %d but got %d", numberOfPlayersWanted, game.StartCalledWith)
+	}
+}
+
+func AssertGameNotFinished(t testing.TB, game *GameSpy) {
+	t.Helper()
+	if game.FinishedCalled {
+		t.Errorf("game should not have finished")
+	}
+}
+
+func AssertGameNotStarted(t testing.TB, game *GameSpy) {
+	t.Helper()
+	if game.StartCalled {
+		t.Errorf("game should not have started")
+	}
+}
+
+func AssertFinishCalledWith(t testing.TB, game *GameSpy, winner string) {
+	t.Helper()
+	if game.FinishCalledWith != winner {
+		t.Errorf("expected finish called with %q but got %q", winner, game.FinishCalledWith)
+	}
+}
+
+func AssertMessagesSentToUser(t testing.TB, stdout *bytes.Buffer, messages ...string) {
+	t.Helper()
+	want := strings.Join(messages, "")
+	got := stdout.String()
+	if got != want {
+		t.Errorf("got %q sent to stdout but expected %+v", got, messages)
 	}
 }
