@@ -11,7 +11,10 @@ func TestRecordingWinsAndRetrievingThem(t *testing.T) {
 	database, cleanDatabase := createTempFile(t, `[]`)
 	defer cleanDatabase()
 	store, _ := poker.NewFileSystemPlayerStore(database)
-	server := poker.NewPlayerServer(store)
+
+	server, err := poker.NewPlayerServer(store)
+	poker.AssertNoError(t, err)
+
 	player := "Pepper"
 
 	server.ServeHTTP(httptest.NewRecorder(), newPostWinRequest(player))
@@ -21,7 +24,7 @@ func TestRecordingWinsAndRetrievingThem(t *testing.T) {
 	t.Run("Get score", func(t *testing.T) {
 		response := httptest.NewRecorder()
 		server.ServeHTTP(response, newGetScoreRequest(player))
-		poker.AssertStatus(t, response.Code, http.StatusOK)
+		poker.AssertStatus(t, response, http.StatusOK)
 
 		poker.AssertResponseBody(t, response.Body.String(), "3")
 	})
@@ -29,7 +32,7 @@ func TestRecordingWinsAndRetrievingThem(t *testing.T) {
 	t.Run("Get league", func(t *testing.T) {
 		response := httptest.NewRecorder()
 		server.ServeHTTP(response, newLeagueRequest())
-		poker.AssertStatus(t, response.Code, http.StatusOK)
+		poker.AssertStatus(t, response, http.StatusOK)
 		poker.AssertContentType(t, response, poker.JsonContentType)
 
 		got := getLeagueFromResponse(t, response.Body)
