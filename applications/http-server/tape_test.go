@@ -1,6 +1,7 @@
-package poker
+package poker_test
 
 import (
+	poker "applications/http-server"
 	"io"
 	"testing"
 )
@@ -9,7 +10,7 @@ func TestTape_Write(t *testing.T) {
 	File, clean := createTempFile(t, "12345")
 	defer clean()
 
-	tape := &Tape{File}
+	tape := &poker.Tape{File}
 
 	tape.Write([]byte("abc"))
 
