@@ -4,11 +4,14 @@ package poker
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"net/http/httptest"
 	"reflect"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/gorilla/websocket"
 )
 
 type StubPlayerStore struct {
@@ -46,14 +49,16 @@ type SpyBlindAlerter struct {
 type GameSpy struct {
 	StartCalled     bool
 	StartCalledWith int
+	BlindAlert      []byte
 
 	FinishedCalled   bool
 	FinishCalledWith string
 }
 
-func (g *GameSpy) Start(numberOfPlayers int) {
+func (g *GameSpy) Start(numberOfPlayers int, out io.Writer) {
 	g.StartCalled = true
 	g.StartCalledWith = numberOfPlayers
+	out.Write(g.BlindAlert)
 }
 
 func (g *GameSpy) Finish(winner string) {
@@ -61,8 +66,25 @@ func (g *GameSpy) Finish(winner string) {
 	g.FinishCalledWith = winner
 }
 
-func (s *SpyBlindAlerter) ScheduleAlertAt(duration time.Duration, amount int) {
+func (s *SpyBlindAlerter) ScheduleAlertAt(duration time.Duration, amount int, to io.Writer) {
 	s.Alerts = append(s.Alerts, ScheduledAlert{duration, amount})
+}
+
+func Within(t testing.TB, d time.Duration, assert func()) {
+	t.Helper()
+
+	done := make(chan struct{}, 1)
+
+	go func() {
+		assert()
+		done <- struct{}{}
+	}()
+
+	select {
+	case <-time.After(d):
+		t.Error("timed out")
+	case <-done:
+	}
 }
 
 func AssertResponseBody(t testing.TB, got, want string) {
@@ -141,6 +163,7 @@ func AssertScheduledAlert(t testing.TB, got, want ScheduledAlert) {
 
 func AssertGameStartedWith(t testing.TB, game *GameSpy, numberOfPlayersWanted int) {
 	t.Helper()
+
 	if game.StartCalledWith != numberOfPlayersWanted {
 		t.Errorf("wanted Start called with %d but got %d", numberOfPlayersWanted, game.StartCalledWith)
 	}
@@ -148,6 +171,7 @@ func AssertGameStartedWith(t testing.TB, game *GameSpy, numberOfPlayersWanted in
 
 func AssertGameNotFinished(t testing.TB, game *GameSpy) {
 	t.Helper()
+
 	if game.FinishedCalled {
 		t.Errorf("game should not have finished")
 	}
@@ -155,6 +179,7 @@ func AssertGameNotFinished(t testing.TB, game *GameSpy) {
 
 func AssertGameNotStarted(t testing.TB, game *GameSpy) {
 	t.Helper()
+
 	if game.StartCalled {
 		t.Errorf("game should not have started")
 	}
@@ -162,16 +187,41 @@ func AssertGameNotStarted(t testing.TB, game *GameSpy) {
 
 func AssertFinishCalledWith(t testing.TB, game *GameSpy, winner string) {
 	t.Helper()
-	if game.FinishCalledWith != winner {
+
+	passed := retryUntil(500*time.Millisecond, func() bool {
+		return game.FinishCalledWith == winner
+	})
+
+	if !passed {
 		t.Errorf("expected finish called with %q but got %q", winner, game.FinishCalledWith)
 	}
 }
 
 func AssertMessagesSentToUser(t testing.TB, stdout *bytes.Buffer, messages ...string) {
 	t.Helper()
+
 	want := strings.Join(messages, "")
 	got := stdout.String()
 	if got != want {
 		t.Errorf("got %q sent to stdout but expected %+v", got, messages)
 	}
+}
+
+func AssertWebsocketGotMsg(t *testing.T, ws *websocket.Conn, want string) {
+	_, msg, _ := ws.ReadMessage()
+	if string(msg) != want {
+		t.Errorf("got %q, want %q", string(msg), want)
+	}
+}
+
+func retryUntil(d time.Duration, f func() bool) bool {
+	deadline := time.Now().Add(d)
+
+	for time.Now().Before(deadline) {
+		if f() {
+			return true
+		}
+	}
+
+	return false
 }

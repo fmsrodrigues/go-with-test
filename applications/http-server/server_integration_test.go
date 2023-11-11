@@ -10,10 +10,13 @@ import (
 func TestRecordingWinsAndRetrievingThem(t *testing.T) {
 	database, cleanDatabase := createTempFile(t, `[]`)
 	defer cleanDatabase()
-	store, _ := poker.NewFileSystemPlayerStore(database)
 
-	server, err := poker.NewPlayerServer(store)
-	poker.AssertNoError(t, err)
+	store, err := poker.NewFileSystemPlayerStore(database)
+	if err != nil {
+		t.Fatalf("problem creating file system player store, %v", err)
+	}
+
+	server := mustMakePlayerServer(t, store, dummyGame)
 
 	player := "Pepper"
 
